@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.SortedMap;
 
 public interface Dao<T extends Entity> {
 
@@ -13,18 +12,18 @@ public interface Dao<T extends Entity> {
 
     <K extends Key<T>> Map<K, T> getAll(final Set<K> keys) throws IOException;
 
-    <K extends Key<T>> SortedMap<Key<T>, T> scan(final K startKey,
-                                                 final boolean startKeyInclusive,
-                                                 final K endKey,
-                                                 final boolean endKeyInclusive,
-                                                 final int numRows) throws IOException;
+    <K extends Key<T>> Map<Key<T>, T> scan(final K startKey,
+                                           final boolean startKeyInclusive,
+                                           final K endKey,
+                                           final boolean endKeyInclusive,
+                                           final int numRows) throws IOException;
 
-    <K extends Key<T>> SortedMap<Key<T>, T> scan(final K startKey,
-                                                 final boolean startKeyInclusive,
-                                                 final K endKey,
-                                                 final boolean endKeyInclusive,
-                                                 final int numRows,
-                                                 final String constant) throws IOException;
+    <K extends Key<T>> Map<Key<T>, T> scan(final K startKey,
+                                           final boolean startKeyInclusive,
+                                           final K endKey,
+                                           final boolean endKeyInclusive,
+                                           final int numRows,
+                                           final String constant) throws IOException;
 
     @Deprecated
     <K extends Key<T>> T save(final K key, final T entity) throws IOException;

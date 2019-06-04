@@ -1,6 +1,5 @@
 package com.bettercloud.bigtable.orm;
 
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public class RawKey<T extends Entity> implements Key<T> {
@@ -27,10 +26,5 @@ public class RawKey<T extends Entity> implements Key<T> {
     @Override
     public int hashCode() {
         return Arrays.hashCode(key);
-    }
-
-    @Override
-    public int compareTo(Key otherKey) {
-        return ByteBuffer.wrap(this.toBytes()).compareTo(ByteBuffer.wrap(otherKey.toBytes()));
     }
 }

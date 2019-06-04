@@ -23,13 +23,12 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -148,7 +147,7 @@ class BigTableEntityDao<T extends Entity> implements Dao<T> {
      * Utility method for running scan without a provided constant.
      *
      * Runs a paging table scan from the provided starting key to the provided ending key,
-     * and returns a list of paired Key/Value entities in the order returned from BigTable.
+     * and returns a {@link LinkedHashMap} in the order returned from BigTable.
      *
      * Use the last returned entity to construct a new starting key for subsequent paging requests until no values are returned.
      *
@@ -157,21 +156,21 @@ class BigTableEntityDao<T extends Entity> implements Dao<T> {
      * @param endKey key to end scanning on (does not have to have an existing record at the location)
      * @param endKeyInclusive whether to include result from endKey
      * @param numRows max number of entries to return
-     * @return A list of entities in the order that they are stored in BigTable
+     * @return {@link LinkedHashMap} in the order returned from BigTable
      * @throws IOException when an error occurs while communicating with BigTable
      */
     @Override
-    public <K extends Key<T>> SortedMap<Key<T>, T> scan(final K startKey,
-                                                         final boolean startKeyInclusive,
-                                                         final K endKey,
-                                                         final boolean endKeyInclusive,
-                                                         final int numRows) throws IOException {
+    public <K extends Key<T>> Map<Key<T>, T> scan(final K startKey,
+                                                  final boolean startKeyInclusive,
+                                                  final K endKey,
+                                                  final boolean endKeyInclusive,
+                                                  final int numRows) throws IOException {
         return scan(startKey, startKeyInclusive, endKey, endKeyInclusive, numRows, null);
     }
 
     /**
      * Runs a paging table scan from the provided starting key to the provided ending key,
-     * and returns a list of paired Key/Value entities in the order returned from BigTable.
+     * and returns a {@link LinkedHashMap} in the order returned from BigTable.
      *
      * Use the last returned entity to construct a new starting key for subsequent paging requests until no values are returned.
      *
@@ -181,16 +180,16 @@ class BigTableEntityDao<T extends Entity> implements Dao<T> {
      * @param endKeyInclusive whether to include result from endKey
      * @param numRows max number of entries to return
      * @param constant optional field to be used to be included, should be the constant provided to KeyComponent if it exists
-     * @return A list of entities in the order that they are stored in BigTable
+     * @return {@link LinkedHashMap} in the order returned from BigTable
      * @throws IOException when an error occurs while communicating with BigTable
      */
     @Override
-    public <K extends Key<T>> SortedMap<Key<T>, T> scan(final K startKey,
-                                                        final boolean startKeyInclusive,
-                                                        final K endKey,
-                                                        final boolean endKeyInclusive,
-                                                        final int numRows,
-                                                        @Nullable final String constant) throws IOException {
+    public <K extends Key<T>> Map<Key<T>, T> scan(final K startKey,
+                                                  final boolean startKeyInclusive,
+                                                  final K endKey,
+                                                  final boolean endKeyInclusive,
+                                                  final int numRows,
+                                                  @Nullable final String constant) throws IOException {
         Objects.requireNonNull(startKey);
         Objects.requireNonNull(endKey);
 
@@ -207,7 +206,7 @@ class BigTableEntityDao<T extends Entity> implements Dao<T> {
         scan.withStopRow(endKey.toBytes(), endKeyInclusive);
 
         final ResultScanner scanner = table.getScanner(scan);
-        final SortedMap<Key<T>, T> results = new TreeMap<>();
+        final Map<Key<T>, T> results = new LinkedHashMap<>();
 
         Result result;
         while ((result = scanner.next()) != null) {
@@ -217,7 +216,7 @@ class BigTableEntityDao<T extends Entity> implements Dao<T> {
             }
         }
 
-        return Collections.unmodifiableSortedMap(results);
+        return Collections.unmodifiableMap(results);
     }
 
     /**
