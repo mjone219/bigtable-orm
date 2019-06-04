@@ -1,5 +1,6 @@
 package com.bettercloud.bigtable.orm;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -13,11 +14,18 @@ public interface Dao<T extends Entity> {
 
     <K extends Key<T>> Map<K, T> getAll(final Set<K> keys) throws IOException;
 
-    <K extends Key<T>> List<T> scan(final K startKey,
-                                    final boolean startKeyInclusive,
-                                    final K endKey,
-                                    final boolean endKeyInclusive,
-                                    final int numRows) throws IOException;
+    <K extends Key<T>> List<Map.Entry<K, T>> scan(final K startKey,
+                                                  final boolean startKeyInclusive,
+                                                  final K endKey,
+                                                  final boolean endKeyInclusive,
+                                                  final int numRows) throws IOException;
+
+    <K extends Key<T>> List<Map.Entry<K, T>> scan(final K startKey,
+                                                  final boolean startKeyInclusive,
+                                                  final K endKey,
+                                                  final boolean endKeyInclusive,
+                                                  final int numRows,
+                                                  @Nullable final String constant) throws IOException;
     @Deprecated
     <K extends Key<T>> T save(final K key, final T entity) throws IOException;
 

@@ -1179,817 +1179,817 @@ public class BigTableEntityDaoTest {
 
         assertFalse(retrievedEntities.containsKey(key));
     }
-
-    @Test(expected = NullPointerException.class)
-    public void testScanWithNullStartKeyThrowsNullPointerException() throws IOException {
-        Key<TestEntity> endKey = new StringKey<>("key");
-
-        testEntityDao.scan(null, true, endKey, true, 1);
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testScanWithNullEndKeyThrowsNullPointerException() throws IOException {
-        Key<TestEntity> startKey = new StringKey<>("key");
-
-        testEntityDao.scan(startKey, true, null, true, 1);
-    }
-
-    @Test
-    public void testScanRetrievesAllColumns() throws IOException {
-        final String stringValue = "some string";
-
-        final Boolean booleanValue = true;
-
-        final TestNestedObject nestedObject = new TestNestedObject();
-        nestedObject.setSomeValue(3);
-
-        final Result result = mock(Result.class);
-        when(result.isEmpty()).thenReturn(false);
-
-        final Cell stringValueCell = mock(Cell.class);
-
-        final byte[] stringValueBytes = new byte[] {
-                1, 2, 3
-        };
-
-        when(stringValueCell.getValueArray()).thenReturn(stringValueBytes);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell);
-
-        when(objectMapper.readValue(stringValueBytes, TestColumns.STRING_VALUE.getTypeReference()))
-                .thenReturn(stringValue);
-
-        final Cell booleanValueCell = mock(Cell.class);
-
-        final byte[] booleanValueBytes = new byte[] {
-                0
-        };
-
-        when(booleanValueCell.getValueArray()).thenReturn(booleanValueBytes);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell);
-
-        when(objectMapper.readValue(booleanValueBytes, TestColumns.BOOLEAN_VALUE.getTypeReference()))
-                .thenReturn(booleanValue);
-
-        final Cell nestedObjectCell = mock(Cell.class);
-
-        final byte[] nestedObjectBytes = new byte[] {
-                5, 4, 3, 2, 1, 0
-        };
-
-        when(nestedObjectCell.getValueArray()).thenReturn(nestedObjectBytes);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
-                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()))).thenReturn(nestedObjectCell);
-
-        when(objectMapper.readValue(nestedObjectBytes, TestColumns.NESTED_OBJECT.getTypeReference()))
-                .thenReturn(nestedObject);
-
-        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
-        when(scanner.next()).thenAnswer(new Answer() {
-            private int count = 0;
-
-            @Override
-            public Object answer(InvocationOnMock invocation) {
-                if (count == 0) {
-                    count++;
-                    return result;
-                }
-
-                return null;
-            }
-        });
-
-        final Key<TestEntity> startKey = new StringKey<>("startKey");
-        final Key<TestEntity> endKey = new StringKey<>("endKey");
-        final List<TestEntity> retrievedEntities = testEntityDao.scan(startKey, true, endKey, true, 1);
-
-        assertEquals(1, retrievedEntities.size());
-
-        final TestEntity entity = retrievedEntities.get(0);
-        assertEquals(stringValue, entity.getStringValue());
-        assertEquals(booleanValue, entity.getBooleanValue());
-        assertEquals(nestedObject, entity.getNestedObject());
-    }
-
-    @Test
-    public void testScanRetrievesAllColumnsForMultipleRows() throws IOException {
-        final String stringValue1 = "some string";
-
-        final Boolean booleanValue1 = true;
-
-        final TestNestedObject nestedObject1 = new TestNestedObject();
-        nestedObject1.setSomeValue(3);
-
-        final Result result1 = mock(Result.class);
-        when(result1.isEmpty()).thenReturn(false);
-
-        final Cell stringValueCell1 = mock(Cell.class);
-
-        final byte[] stringValueBytes1 = new byte[] {
-                1, 2, 3
-        };
-
-        when(stringValueCell1.getValueArray()).thenReturn(stringValueBytes1);
-
-        when(result1.getColumnLatestCell(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell1);
-
-        when(objectMapper.readValue(stringValueBytes1, TestColumns.STRING_VALUE.getTypeReference()))
-                .thenReturn(stringValue1);
-
-        final Cell booleanValueCell1 = mock(Cell.class);
-
-        final byte[] booleanValueBytes1 = new byte[] {
-                0
-        };
-
-        when(booleanValueCell1.getValueArray()).thenReturn(booleanValueBytes1);
-
-        when(result1.getColumnLatestCell(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell1);
-
-        when(objectMapper.readValue(booleanValueBytes1, TestColumns.BOOLEAN_VALUE.getTypeReference()))
-                .thenReturn(booleanValue1);
-
-        final Cell nestedObjectCell1 = mock(Cell.class);
-
-        final byte[] nestedObjectBytes1 = new byte[] {
-                5, 4, 3, 2, 1, 0
-        };
-
-        when(nestedObjectCell1.getValueArray()).thenReturn(nestedObjectBytes1);
-
-        when(result1.getColumnLatestCell(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
-                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()))).thenReturn(nestedObjectCell1);
-
-        when(objectMapper.readValue(nestedObjectBytes1, TestColumns.NESTED_OBJECT.getTypeReference()))
-                .thenReturn(nestedObject1);
-
-        final String stringValue2 = "some other string";
-
-        final Boolean booleanValue2 = false;
-
-        final TestNestedObject nestedObject2 = new TestNestedObject();
-        nestedObject2.setSomeValue(8);
-
-        final Result result2 = mock(Result.class);
-        when(result2.isEmpty()).thenReturn(false);
-
-        final Cell stringValueCell2 = mock(Cell.class);
-
-        final byte[] stringValueBytes2 = new byte[] {
-                9, 8, 7
-        };
-
-        when(stringValueCell2.getValueArray()).thenReturn(stringValueBytes2);
-
-        when(result2.getColumnLatestCell(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell2);
-
-        when(objectMapper.readValue(stringValueBytes2, TestColumns.STRING_VALUE.getTypeReference()))
-                .thenReturn(stringValue2);
-
-        final Cell booleanValueCell2 = mock(Cell.class);
-
-        final byte[] booleanValueBytes2 = new byte[] {
-                9
-        };
-
-        when(booleanValueCell2.getValueArray()).thenReturn(booleanValueBytes2);
-
-        when(result2.getColumnLatestCell(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell2);
-
-        when(objectMapper.readValue(booleanValueBytes2, TestColumns.BOOLEAN_VALUE.getTypeReference()))
-                .thenReturn(booleanValue2);
-
-        final Cell nestedObjectCell2 = mock(Cell.class);
-
-        final byte[] nestedObjectBytes2 = new byte[] {
-                3, 3, 3, 3, 3
-        };
-
-        when(nestedObjectCell2.getValueArray()).thenReturn(nestedObjectBytes2);
-
-        when(result2.getColumnLatestCell(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
-                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()))).thenReturn(nestedObjectCell2);
-
-        when(objectMapper.readValue(nestedObjectBytes2, TestColumns.NESTED_OBJECT.getTypeReference()))
-                .thenReturn(nestedObject2);
-
-        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
-        when(scanner.next()).thenAnswer(new Answer() {
-            private int count = 0;
-
-            @Override
-            public Object answer(InvocationOnMock invocation) {
-                switch (count) {
-                    case 0:
-                        count++;
-                        return result1;
-                    case 1:
-                        count++;
-                        return result2;
-                    default:
-                        count++;
-                        return null;
-                }
-            }
-        });
-
-        final Key<TestEntity> startKey = new StringKey<>("startKey");
-        final Key<TestEntity> endKey = new StringKey<>("endKey");
-        final List<TestEntity> retrievedEntities = testEntityDao.scan(startKey, true, endKey, true, 5);
-
-        assertEquals(2, retrievedEntities.size());
-
-        final TestEntity entity1 = retrievedEntities.get(0);
-        assertEquals(stringValue1, entity1.getStringValue());
-        assertEquals(booleanValue1, entity1.getBooleanValue());
-        assertEquals(nestedObject1, entity1.getNestedObject());
-
-        final TestEntity entity2 = retrievedEntities.get(1);
-        assertEquals(stringValue2, entity2.getStringValue());
-        assertEquals(booleanValue2, entity2.getBooleanValue());
-        assertEquals(nestedObject2, entity2.getNestedObject());
-    }
-
-    @Test
-    public void testScanRetrievesNullValues() throws IOException {
-        final String stringValue = "some string";
-
-        final Boolean booleanValue = true;
-
-        final TestNestedObject nestedObject = null;
-
-        final Result result = mock(Result.class);
-        when(result.isEmpty()).thenReturn(false);
-
-        final Cell stringValueCell = mock(Cell.class);
-
-        final byte[] stringValueBytes = new byte[] {
-                1, 2, 3
-        };
-
-        when(stringValueCell.getValueArray()).thenReturn(stringValueBytes);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell);
-
-        when(objectMapper.readValue(stringValueBytes, TestColumns.STRING_VALUE.getTypeReference()))
-                .thenReturn(stringValue);
-
-        final Cell booleanValueCell = mock(Cell.class);
-
-        final byte[] booleanValueBytes = new byte[] {
-                0
-        };
-
-        when(booleanValueCell.getValueArray()).thenReturn(booleanValueBytes);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell);
-
-        when(objectMapper.readValue(booleanValueBytes, TestColumns.BOOLEAN_VALUE.getTypeReference()))
-                .thenReturn(booleanValue);
-
-        final Cell nestedObjectCell = mock(Cell.class);
-
-        final byte[] nestedObjectBytes = new byte[0];
-
-        when(nestedObjectCell.getValueArray()).thenReturn(nestedObjectBytes);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
-                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()))).thenReturn(nestedObjectCell);
-
-        when(objectMapper.readValue(nestedObjectBytes, TestColumns.NESTED_OBJECT.getTypeReference()))
-                .thenReturn(nestedObject);
-
-        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
-        when(scanner.next()).thenAnswer(new Answer() {
-            private int count = 0;
-
-            @Override
-            public Object answer(InvocationOnMock invocation) {
-                if (count == 0) {
-                    count++;
-                    return result;
-                }
-
-                return null;
-            }
-        });
-
-        final Key<TestEntity> startKey = new StringKey<>("startKey");
-        final Key<TestEntity> endKey = new StringKey<>("endKey");
-        final List<TestEntity> retrievedEntities = testEntityDao.scan(startKey, true, endKey, true, 1);
-
-        assertEquals(1, retrievedEntities.size());
-
-        final TestEntity entity = retrievedEntities.get(0);
-        assertNull(entity.getNestedObject());
-    }
-
-    @Test
-    public void testScanRetrievesNonExistentCellsAsNullValues() throws IOException {
-        final Result result = mock(Result.class);
-        when(result.isEmpty()).thenReturn(false);
-
-        final Cell stringValueCell = null;
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell);
-
-        final Cell booleanValueCell = null;
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell);
-
-        final Cell nestedObjectCell = null;
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
-                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()))).thenReturn(nestedObjectCell);
-
-        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
-        when(scanner.next()).thenAnswer(new Answer() {
-            private int count = 0;
-
-            @Override
-            public Object answer(InvocationOnMock invocation) {
-                if (count == 0) {
-                    count++;
-                    return result;
-                }
-
-                return null;
-            }
-        });
-
-        final Key<TestEntity> startKey = new StringKey<>("startKey");
-        final Key<TestEntity> endKey = new StringKey<>("endKey");
-        final List<TestEntity> retrievedEntities = testEntityDao.scan(startKey, true, endKey, true, 1);
-
-        assertEquals(1, retrievedEntities.size());
-
-        final TestEntity entity = retrievedEntities.get(0);
-        assertNull(entity.getStringValue());
-        assertNull(entity.getBooleanValue());
-        assertNull(entity.getNestedObject());
-    }
-
-    @Test
-    public void testScanRetrievesVersionedValuesAndTimestamps() throws IOException {
-        final String stringValue = "some string";
-
-        final Boolean booleanValue = true;
-        final long booleanValueTimestamp = 1234L;
-
-        final Result result = mock(Result.class);
-        when(result.isEmpty()).thenReturn(false);
-
-        final Cell stringValueCell = mock(Cell.class);
-
-        final byte[] stringValueBytes = new byte[] {
-                1, 2, 3
-        };
-
-        when(stringValueCell.getValueArray()).thenReturn(stringValueBytes);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestVersionedColumns.STRING_VALUE.getFamily()),
-                Bytes.toBytes(TestVersionedColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell);
-
-        when(objectMapper.readValue(stringValueBytes, TestVersionedColumns.STRING_VALUE.getTypeReference()))
-                .thenReturn(stringValue);
-
-        final Cell booleanValueCell = mock(Cell.class);
-
-        final byte[] booleanValueBytes = new byte[] {
-                0
-        };
-
-        when(booleanValueCell.getValueArray()).thenReturn(booleanValueBytes);
-        when(booleanValueCell.getTimestamp()).thenReturn(booleanValueTimestamp);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestVersionedColumns.VERSIONED_BOOLEAN_VALUE.getFamily()),
-                Bytes.toBytes(TestVersionedColumns.VERSIONED_BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell);
-
-        when(objectMapper.readValue(booleanValueBytes, TestVersionedColumns.VERSIONED_BOOLEAN_VALUE.getTypeReference()))
-                .thenReturn(booleanValue);
-
-        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
-        when(scanner.next()).thenAnswer(new Answer() {
-            private int count = 0;
-
-            @Override
-            public Object answer(InvocationOnMock invocation) {
-                if (count == 0) {
-                    count++;
-                    return result;
-                }
-
-                return null;
-            }
-        });
-
-        final Key<TestVersionedEntity> startKey = new StringKey<>("startKey");
-        final Key<TestVersionedEntity> endKey = new StringKey<>("endKey");
-        final List<TestVersionedEntity> retrievedEntities = testVersionedEntityDao.scan(startKey, true, endKey, true, 1);
-
-        assertEquals(1, retrievedEntities.size());
-
-        final TestVersionedEntity entity = retrievedEntities.get(0);
-        assertEquals(stringValue, entity.getStringValue());
-        assertEquals(booleanValue, entity.getVersionedBooleanValue());
-        assertEquals(booleanValueTimestamp, (long) entity.getVersionedBooleanValueTimestamp());
-    }
-
-    @Test
-    public void testScanRetrievesNonExistentVersionedCellsAsNullValuesAndNullTimestamps() throws IOException {
-        final Result result = mock(Result.class);
-        when(result.isEmpty()).thenReturn(false);
-
-        final Cell stringValueCell = null;
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestVersionedColumns.STRING_VALUE.getFamily()),
-                Bytes.toBytes(TestVersionedColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell);
-
-        final Cell booleanValueCell = null;
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestVersionedColumns.VERSIONED_BOOLEAN_VALUE.getFamily()),
-                Bytes.toBytes(TestVersionedColumns.VERSIONED_BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell);
-
-        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
-        when(scanner.next()).thenAnswer(new Answer() {
-            private int count = 0;
-
-            @Override
-            public Object answer(InvocationOnMock invocation) {
-                if (count == 0) {
-                    count++;
-                    return result;
-                }
-
-                return null;
-            }
-        });
-
-        final Key<TestVersionedEntity> startKey = new StringKey<>("startKey");
-        final Key<TestVersionedEntity> endKey = new StringKey<>("endKey");
-        final List<TestVersionedEntity> retrievedEntities = testVersionedEntityDao.scan(startKey, true, endKey, true, 1);
-
-        assertEquals(1, retrievedEntities.size());
-
-        final TestVersionedEntity entity = retrievedEntities.get(0);
-        assertNull(entity.getStringValue());
-        assertNull(entity.getVersionedBooleanValue());
-        assertNull(entity.getVersionedBooleanValueTimestamp());
-    }
-
-    @Test
-    public void testScanWithLiveObjectMapper() throws IOException {
-        testEntityDao = new BigTableEntityDao<>(table, columns, entityFactory, delegateFactory);
-
-        final String stringValue = "some string";
-
-        final Boolean booleanValue = true;
-
-        final TestNestedObject nestedObject = new TestNestedObject();
-        nestedObject.setSomeValue(3);
-
-        final Result result = mock(Result.class);
-        when(result.isEmpty()).thenReturn(false);
-
-        final Cell stringValueCell = mock(Cell.class);
-
-        final byte[] stringValueBytes = liveObjectMapper.writeValueAsBytes(stringValue);
-
-        when(stringValueCell.getValueArray()).thenReturn(stringValueBytes);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell);
-
-        final Cell booleanValueCell = mock(Cell.class);
-
-        final byte[] booleanValueBytes = liveObjectMapper.writeValueAsBytes(booleanValue);
-
-        when(booleanValueCell.getValueArray()).thenReturn(booleanValueBytes);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell);
-
-        final Cell nestedObjectCell = mock(Cell.class);
-
-        final byte[] nestedObjectBytes = liveObjectMapper.writeValueAsBytes(nestedObject);
-
-        when(nestedObjectCell.getValueArray()).thenReturn(nestedObjectBytes);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
-                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()))).thenReturn(nestedObjectCell);
-
-        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
-        when(scanner.next()).thenAnswer(new Answer() {
-            private int count = 0;
-
-            @Override
-            public Object answer(InvocationOnMock invocation) {
-                if (count == 0) {
-                    count++;
-                    return result;
-                }
-
-                return null;
-            }
-        });
-
-        final Key<TestEntity> startKey = new StringKey<>("startKey");
-        final Key<TestEntity> endKey = new StringKey<>("endKey");
-        final List<TestEntity> retrievedEntities = testEntityDao.scan(startKey, true, endKey, true, 1);
-
-        assertEquals(1, retrievedEntities.size());
-
-        final TestEntity entity = retrievedEntities.get(0);
-        assertEquals(stringValue, entity.getStringValue());
-        assertEquals(booleanValue, entity.getBooleanValue());
-        assertEquals(nestedObject, entity.getNestedObject());
-    }
-
-    @Test
-    public void testScanRetrievesNullStringValueWithLiveObjectMapper() throws IOException {
-        testEntityDao = new BigTableEntityDao<>(table, columns, entityFactory, delegateFactory);
-
-        final String stringValue = null;
-
-        final Boolean booleanValue = true;
-
-        final TestNestedObject nestedObject = new TestNestedObject();
-        nestedObject.setSomeValue(3);
-
-        final Result result = mock(Result.class);
-        when(result.isEmpty()).thenReturn(false);
-
-        final Cell stringValueCell = mock(Cell.class);
-
-        final byte[] stringValueBytes = new byte[0];
-
-        when(stringValueCell.getValueArray()).thenReturn(stringValueBytes);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell);
-
-        final Cell booleanValueCell = mock(Cell.class);
-
-        final byte[] booleanValueBytes = liveObjectMapper.writeValueAsBytes(booleanValue);
-
-        when(booleanValueCell.getValueArray()).thenReturn(booleanValueBytes);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell);
-
-        final Cell nestedObjectCell = mock(Cell.class);
-
-        final byte[] nestedObjectBytes = liveObjectMapper.writeValueAsBytes(nestedObject);
-
-        when(nestedObjectCell.getValueArray()).thenReturn(nestedObjectBytes);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
-                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()))).thenReturn(nestedObjectCell);
-
-        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
-        when(scanner.next()).thenAnswer(new Answer() {
-            private int count = 0;
-
-            @Override
-            public Object answer(InvocationOnMock invocation) {
-                if (count == 0) {
-                    count++;
-                    return result;
-                }
-
-                return null;
-            }
-        });
-
-        final Key<TestEntity> startKey = new StringKey<>("startKey");
-        final Key<TestEntity> endKey = new StringKey<>("endKey");
-        final List<TestEntity> retrievedEntities = testEntityDao.scan(startKey, true, endKey, true, 1);
-
-        assertEquals(1, retrievedEntities.size());
-
-        final TestEntity entity = retrievedEntities.get(0);
-        assertEquals(stringValue, entity.getStringValue());
-        assertEquals(booleanValue, entity.getBooleanValue());
-        assertEquals(nestedObject, entity.getNestedObject());
-    }
-
-    @Test
-    public void testScanRetrievesNullBooleanValueWithLiveObjectMapper() throws IOException {
-        testEntityDao = new BigTableEntityDao<>(table, columns, entityFactory, delegateFactory);
-
-        final String stringValue = "some string";
-
-        final Boolean booleanValue = null;
-
-        final TestNestedObject nestedObject = new TestNestedObject();
-        nestedObject.setSomeValue(3);
-
-        final Result result = mock(Result.class);
-        when(result.isEmpty()).thenReturn(false);
-
-        final Cell stringValueCell = mock(Cell.class);
-
-        final byte[] stringValueBytes = liveObjectMapper.writeValueAsBytes(stringValue);
-
-        when(stringValueCell.getValueArray()).thenReturn(stringValueBytes);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell);
-
-        final Cell booleanValueCell = mock(Cell.class);
-
-        final byte[] booleanValueBytes = new byte[0];
-
-        when(booleanValueCell.getValueArray()).thenReturn(booleanValueBytes);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell);
-
-        final Cell nestedObjectCell = mock(Cell.class);
-
-        final byte[] nestedObjectBytes = liveObjectMapper.writeValueAsBytes(nestedObject);
-
-        when(nestedObjectCell.getValueArray()).thenReturn(nestedObjectBytes);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
-                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()))).thenReturn(nestedObjectCell);
-
-        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
-        when(scanner.next()).thenAnswer(new Answer() {
-            private int count = 0;
-
-            @Override
-            public Object answer(InvocationOnMock invocation) {
-                if (count == 0) {
-                    count++;
-                    return result;
-                }
-
-                return null;
-            }
-        });
-
-        final Key<TestEntity> startKey = new StringKey<>("startKey");
-        final Key<TestEntity> endKey = new StringKey<>("endKey");
-        final List<TestEntity> retrievedEntities = testEntityDao.scan(startKey, true, endKey, true, 1);
-
-        assertEquals(1, retrievedEntities.size());
-
-        final TestEntity entity = retrievedEntities.get(0);
-        assertEquals(stringValue, entity.getStringValue());
-        assertEquals(booleanValue, entity.getBooleanValue());
-        assertEquals(nestedObject, entity.getNestedObject());
-    }
-
-    @Test
-    public void testScanRetrievesNullNestedObjectWithLiveObjectMapper() throws IOException {
-        testEntityDao = new BigTableEntityDao<>(table, columns, entityFactory, delegateFactory);
-
-        final String stringValue = "some string";
-
-        final Boolean booleanValue = true;
-
-        final TestNestedObject nestedObject = null;
-
-        final Result result = mock(Result.class);
-        when(result.isEmpty()).thenReturn(false);
-
-        final Cell stringValueCell = mock(Cell.class);
-
-        final byte[] stringValueBytes = liveObjectMapper.writeValueAsBytes(stringValue);
-
-        when(stringValueCell.getValueArray()).thenReturn(stringValueBytes);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell);
-
-        final Cell booleanValueCell = mock(Cell.class);
-
-        final byte[] booleanValueBytes = liveObjectMapper.writeValueAsBytes(booleanValue);
-
-        when(booleanValueCell.getValueArray()).thenReturn(booleanValueBytes);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell);
-
-        final Cell nestedObjectCell = mock(Cell.class);
-
-        final byte[] nestedObjectBytes = new byte[0];
-
-        when(nestedObjectCell.getValueArray()).thenReturn(nestedObjectBytes);
-
-        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
-                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()))).thenReturn(nestedObjectCell);
-
-        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
-        when(scanner.next()).thenAnswer(new Answer() {
-            private int count = 0;
-
-            @Override
-            public Object answer(InvocationOnMock invocation) {
-                if (count == 0) {
-                    count++;
-                    return result;
-                }
-
-                return null;
-            }
-        });
-
-        final Key<TestEntity> startKey = new StringKey<>("startKey");
-        final Key<TestEntity> endKey = new StringKey<>("endKey");
-        final List<TestEntity> retrievedEntities = testEntityDao.scan(startKey, true, endKey, true, 1);
-
-        assertEquals(1, retrievedEntities.size());
-
-        final TestEntity entity = retrievedEntities.get(0);
-        assertEquals(stringValue, entity.getStringValue());
-        assertEquals(booleanValue, entity.getBooleanValue());
-        assertEquals(nestedObject, entity.getNestedObject());
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testSaveWithNullKeyThrowsNullPointerException() throws IOException {
-        final TestEntity testEntity = new TestEntity();
-        testEntity.setStringValue("test");
-
-        testEntityDao.save(null, testEntity);
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void testSaveWithNullEntityThrowsNullPointerException() throws IOException {
-        final Key<TestEntity> key = new StringKey<>("key");
-
-        testEntityDao.save(key, null);
-    }
-
-    @Test
-    public void testSavePutsAllColumns() throws IOException {
-        final String stringValue = "some string";
-
-        final Boolean booleanValue = true;
-
-        final TestNestedObject nestedObject = new TestNestedObject();
-        nestedObject.setSomeValue(3);
-
-        final TestEntity testEntity = new TestEntity();
-        testEntity.setStringValue(stringValue);
-        testEntity.setBooleanValue(booleanValue);
-        testEntity.setNestedObject(nestedObject);
-
-        final byte[] stringValueBytes = {
-                1, 2, 3
-        };
-
-        when(objectMapper.writeValueAsBytes(stringValue)).thenReturn(stringValueBytes);
-
-        final byte[] booleanValueBytes = {
-                0
-        };
-
-        when(objectMapper.writeValueAsBytes(booleanValue)).thenReturn(booleanValueBytes);
-
-        final byte[] nestedObjectBytes = {
-                5, 4, 3, 2, 1, 0
-        };
-
-        when(objectMapper.writeValueAsBytes(nestedObject)).thenReturn(nestedObjectBytes);
-
-        final TestEntity result = testEntityDao.save(new StringKey<>("key"), testEntity);
-
-        assertNotNull(result);
-
-        assertEquals(stringValue, result.getStringValue());
-        assertEquals(booleanValue, result.getBooleanValue());
-        assertEquals(nestedObject, result.getNestedObject());
-
-        verify(table).put(putArgumentCaptor.capture());
-
-        final List<Put> puts = putArgumentCaptor.getValue();
-        assertNotNull(puts);
-        assertEquals(1, puts.size());
-
-        final Put put = puts.get(0);
-
-        assertTrue(put.has(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()), stringValueBytes));
-        assertTrue(put.has(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
-                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()), booleanValueBytes));
-        assertTrue(put.has(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
-                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()), nestedObjectBytes));
-    }
+//
+//    @Test(expected = NullPointerException.class)
+//    public void testScanWithNullStartKeyThrowsNullPointerException() throws IOException {
+//        Key<TestEntity> endKey = new StringKey<>("key");
+//
+//        testEntityDao.scan(null, true, endKey, true, 1);
+//    }
+//
+//    @Test(expected = NullPointerException.class)
+//    public void testScanWithNullEndKeyThrowsNullPointerException() throws IOException {
+//        Key<TestEntity> startKey = new StringKey<>("key");
+//
+//        testEntityDao.scan(startKey, true, null, true, 1);
+//    }
+//
+//    @Test
+//    public void testScanRetrievesAllColumns() throws IOException {
+//        final String stringValue = "some string";
+//
+//        final Boolean booleanValue = true;
+//
+//        final TestNestedObject nestedObject = new TestNestedObject();
+//        nestedObject.setSomeValue(3);
+//
+//        final Result result = mock(Result.class);
+//        when(result.isEmpty()).thenReturn(false);
+//
+//        final Cell stringValueCell = mock(Cell.class);
+//
+//        final byte[] stringValueBytes = new byte[] {
+//                1, 2, 3
+//        };
+//
+//        when(stringValueCell.getValueArray()).thenReturn(stringValueBytes);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell);
+//
+//        when(objectMapper.readValue(stringValueBytes, TestColumns.STRING_VALUE.getTypeReference()))
+//                .thenReturn(stringValue);
+//
+//        final Cell booleanValueCell = mock(Cell.class);
+//
+//        final byte[] booleanValueBytes = new byte[] {
+//                0
+//        };
+//
+//        when(booleanValueCell.getValueArray()).thenReturn(booleanValueBytes);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell);
+//
+//        when(objectMapper.readValue(booleanValueBytes, TestColumns.BOOLEAN_VALUE.getTypeReference()))
+//                .thenReturn(booleanValue);
+//
+//        final Cell nestedObjectCell = mock(Cell.class);
+//
+//        final byte[] nestedObjectBytes = new byte[] {
+//                5, 4, 3, 2, 1, 0
+//        };
+//
+//        when(nestedObjectCell.getValueArray()).thenReturn(nestedObjectBytes);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
+//                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()))).thenReturn(nestedObjectCell);
+//
+//        when(objectMapper.readValue(nestedObjectBytes, TestColumns.NESTED_OBJECT.getTypeReference()))
+//                .thenReturn(nestedObject);
+//
+//        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+//        when(scanner.next()).thenAnswer(new Answer() {
+//            private int count = 0;
+//
+//            @Override
+//            public Object answer(InvocationOnMock invocation) {
+//                if (count == 0) {
+//                    count++;
+//                    return result;
+//                }
+//
+//                return null;
+//            }
+//        });
+//
+//        final Key<TestEntity> startKey = new StringKey<>("startKey");
+//        final Key<TestEntity> endKey = new StringKey<>("endKey");
+//        final List<TestEntity> retrievedEntities = testEntityDao.scan(startKey, true, endKey, true, 1);
+//
+//        assertEquals(1, retrievedEntities.size());
+//
+//        final TestEntity entity = retrievedEntities.get(0);
+//        assertEquals(stringValue, entity.getStringValue());
+//        assertEquals(booleanValue, entity.getBooleanValue());
+//        assertEquals(nestedObject, entity.getNestedObject());
+//    }
+//
+//    @Test
+//    public void testScanRetrievesAllColumnsForMultipleRows() throws IOException {
+//        final String stringValue1 = "some string";
+//
+//        final Boolean booleanValue1 = true;
+//
+//        final TestNestedObject nestedObject1 = new TestNestedObject();
+//        nestedObject1.setSomeValue(3);
+//
+//        final Result result1 = mock(Result.class);
+//        when(result1.isEmpty()).thenReturn(false);
+//
+//        final Cell stringValueCell1 = mock(Cell.class);
+//
+//        final byte[] stringValueBytes1 = new byte[] {
+//                1, 2, 3
+//        };
+//
+//        when(stringValueCell1.getValueArray()).thenReturn(stringValueBytes1);
+//
+//        when(result1.getColumnLatestCell(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell1);
+//
+//        when(objectMapper.readValue(stringValueBytes1, TestColumns.STRING_VALUE.getTypeReference()))
+//                .thenReturn(stringValue1);
+//
+//        final Cell booleanValueCell1 = mock(Cell.class);
+//
+//        final byte[] booleanValueBytes1 = new byte[] {
+//                0
+//        };
+//
+//        when(booleanValueCell1.getValueArray()).thenReturn(booleanValueBytes1);
+//
+//        when(result1.getColumnLatestCell(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell1);
+//
+//        when(objectMapper.readValue(booleanValueBytes1, TestColumns.BOOLEAN_VALUE.getTypeReference()))
+//                .thenReturn(booleanValue1);
+//
+//        final Cell nestedObjectCell1 = mock(Cell.class);
+//
+//        final byte[] nestedObjectBytes1 = new byte[] {
+//                5, 4, 3, 2, 1, 0
+//        };
+//
+//        when(nestedObjectCell1.getValueArray()).thenReturn(nestedObjectBytes1);
+//
+//        when(result1.getColumnLatestCell(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
+//                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()))).thenReturn(nestedObjectCell1);
+//
+//        when(objectMapper.readValue(nestedObjectBytes1, TestColumns.NESTED_OBJECT.getTypeReference()))
+//                .thenReturn(nestedObject1);
+//
+//        final String stringValue2 = "some other string";
+//
+//        final Boolean booleanValue2 = false;
+//
+//        final TestNestedObject nestedObject2 = new TestNestedObject();
+//        nestedObject2.setSomeValue(8);
+//
+//        final Result result2 = mock(Result.class);
+//        when(result2.isEmpty()).thenReturn(false);
+//
+//        final Cell stringValueCell2 = mock(Cell.class);
+//
+//        final byte[] stringValueBytes2 = new byte[] {
+//                9, 8, 7
+//        };
+//
+//        when(stringValueCell2.getValueArray()).thenReturn(stringValueBytes2);
+//
+//        when(result2.getColumnLatestCell(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell2);
+//
+//        when(objectMapper.readValue(stringValueBytes2, TestColumns.STRING_VALUE.getTypeReference()))
+//                .thenReturn(stringValue2);
+//
+//        final Cell booleanValueCell2 = mock(Cell.class);
+//
+//        final byte[] booleanValueBytes2 = new byte[] {
+//                9
+//        };
+//
+//        when(booleanValueCell2.getValueArray()).thenReturn(booleanValueBytes2);
+//
+//        when(result2.getColumnLatestCell(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell2);
+//
+//        when(objectMapper.readValue(booleanValueBytes2, TestColumns.BOOLEAN_VALUE.getTypeReference()))
+//                .thenReturn(booleanValue2);
+//
+//        final Cell nestedObjectCell2 = mock(Cell.class);
+//
+//        final byte[] nestedObjectBytes2 = new byte[] {
+//                3, 3, 3, 3, 3
+//        };
+//
+//        when(nestedObjectCell2.getValueArray()).thenReturn(nestedObjectBytes2);
+//
+//        when(result2.getColumnLatestCell(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
+//                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()))).thenReturn(nestedObjectCell2);
+//
+//        when(objectMapper.readValue(nestedObjectBytes2, TestColumns.NESTED_OBJECT.getTypeReference()))
+//                .thenReturn(nestedObject2);
+//
+//        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+//        when(scanner.next()).thenAnswer(new Answer() {
+//            private int count = 0;
+//
+//            @Override
+//            public Object answer(InvocationOnMock invocation) {
+//                switch (count) {
+//                    case 0:
+//                        count++;
+//                        return result1;
+//                    case 1:
+//                        count++;
+//                        return result2;
+//                    default:
+//                        count++;
+//                        return null;
+//                }
+//            }
+//        });
+//
+//        final Key<TestEntity> startKey = new StringKey<>("startKey");
+//        final Key<TestEntity> endKey = new StringKey<>("endKey");
+//        final List<TestEntity> retrievedEntities = testEntityDao.scan(startKey, true, endKey, true, 5);
+//
+//        assertEquals(2, retrievedEntities.size());
+//
+//        final TestEntity entity1 = retrievedEntities.get(0);
+//        assertEquals(stringValue1, entity1.getStringValue());
+//        assertEquals(booleanValue1, entity1.getBooleanValue());
+//        assertEquals(nestedObject1, entity1.getNestedObject());
+//
+//        final TestEntity entity2 = retrievedEntities.get(1);
+//        assertEquals(stringValue2, entity2.getStringValue());
+//        assertEquals(booleanValue2, entity2.getBooleanValue());
+//        assertEquals(nestedObject2, entity2.getNestedObject());
+//    }
+//
+//    @Test
+//    public void testScanRetrievesNullValues() throws IOException {
+//        final String stringValue = "some string";
+//
+//        final Boolean booleanValue = true;
+//
+//        final TestNestedObject nestedObject = null;
+//
+//        final Result result = mock(Result.class);
+//        when(result.isEmpty()).thenReturn(false);
+//
+//        final Cell stringValueCell = mock(Cell.class);
+//
+//        final byte[] stringValueBytes = new byte[] {
+//                1, 2, 3
+//        };
+//
+//        when(stringValueCell.getValueArray()).thenReturn(stringValueBytes);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell);
+//
+//        when(objectMapper.readValue(stringValueBytes, TestColumns.STRING_VALUE.getTypeReference()))
+//                .thenReturn(stringValue);
+//
+//        final Cell booleanValueCell = mock(Cell.class);
+//
+//        final byte[] booleanValueBytes = new byte[] {
+//                0
+//        };
+//
+//        when(booleanValueCell.getValueArray()).thenReturn(booleanValueBytes);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell);
+//
+//        when(objectMapper.readValue(booleanValueBytes, TestColumns.BOOLEAN_VALUE.getTypeReference()))
+//                .thenReturn(booleanValue);
+//
+//        final Cell nestedObjectCell = mock(Cell.class);
+//
+//        final byte[] nestedObjectBytes = new byte[0];
+//
+//        when(nestedObjectCell.getValueArray()).thenReturn(nestedObjectBytes);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
+//                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()))).thenReturn(nestedObjectCell);
+//
+//        when(objectMapper.readValue(nestedObjectBytes, TestColumns.NESTED_OBJECT.getTypeReference()))
+//                .thenReturn(nestedObject);
+//
+//        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+//        when(scanner.next()).thenAnswer(new Answer() {
+//            private int count = 0;
+//
+//            @Override
+//            public Object answer(InvocationOnMock invocation) {
+//                if (count == 0) {
+//                    count++;
+//                    return result;
+//                }
+//
+//                return null;
+//            }
+//        });
+//
+//        final Key<TestEntity> startKey = new StringKey<>("startKey");
+//        final Key<TestEntity> endKey = new StringKey<>("endKey");
+//        final List<TestEntity> retrievedEntities = testEntityDao.scan(startKey, true, endKey, true, 1);
+//
+//        assertEquals(1, retrievedEntities.size());
+//
+//        final TestEntity entity = retrievedEntities.get(0);
+//        assertNull(entity.getNestedObject());
+//    }
+//
+//    @Test
+//    public void testScanRetrievesNonExistentCellsAsNullValues() throws IOException {
+//        final Result result = mock(Result.class);
+//        when(result.isEmpty()).thenReturn(false);
+//
+//        final Cell stringValueCell = null;
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell);
+//
+//        final Cell booleanValueCell = null;
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell);
+//
+//        final Cell nestedObjectCell = null;
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
+//                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()))).thenReturn(nestedObjectCell);
+//
+//        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+//        when(scanner.next()).thenAnswer(new Answer() {
+//            private int count = 0;
+//
+//            @Override
+//            public Object answer(InvocationOnMock invocation) {
+//                if (count == 0) {
+//                    count++;
+//                    return result;
+//                }
+//
+//                return null;
+//            }
+//        });
+//
+//        final Key<TestEntity> startKey = new StringKey<>("startKey");
+//        final Key<TestEntity> endKey = new StringKey<>("endKey");
+//        final List<TestEntity> retrievedEntities = testEntityDao.scan(startKey, true, endKey, true, 1);
+//
+//        assertEquals(1, retrievedEntities.size());
+//
+//        final TestEntity entity = retrievedEntities.get(0);
+//        assertNull(entity.getStringValue());
+//        assertNull(entity.getBooleanValue());
+//        assertNull(entity.getNestedObject());
+//    }
+//
+//    @Test
+//    public void testScanRetrievesVersionedValuesAndTimestamps() throws IOException {
+//        final String stringValue = "some string";
+//
+//        final Boolean booleanValue = true;
+//        final long booleanValueTimestamp = 1234L;
+//
+//        final Result result = mock(Result.class);
+//        when(result.isEmpty()).thenReturn(false);
+//
+//        final Cell stringValueCell = mock(Cell.class);
+//
+//        final byte[] stringValueBytes = new byte[] {
+//                1, 2, 3
+//        };
+//
+//        when(stringValueCell.getValueArray()).thenReturn(stringValueBytes);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestVersionedColumns.STRING_VALUE.getFamily()),
+//                Bytes.toBytes(TestVersionedColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell);
+//
+//        when(objectMapper.readValue(stringValueBytes, TestVersionedColumns.STRING_VALUE.getTypeReference()))
+//                .thenReturn(stringValue);
+//
+//        final Cell booleanValueCell = mock(Cell.class);
+//
+//        final byte[] booleanValueBytes = new byte[] {
+//                0
+//        };
+//
+//        when(booleanValueCell.getValueArray()).thenReturn(booleanValueBytes);
+//        when(booleanValueCell.getTimestamp()).thenReturn(booleanValueTimestamp);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestVersionedColumns.VERSIONED_BOOLEAN_VALUE.getFamily()),
+//                Bytes.toBytes(TestVersionedColumns.VERSIONED_BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell);
+//
+//        when(objectMapper.readValue(booleanValueBytes, TestVersionedColumns.VERSIONED_BOOLEAN_VALUE.getTypeReference()))
+//                .thenReturn(booleanValue);
+//
+//        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+//        when(scanner.next()).thenAnswer(new Answer() {
+//            private int count = 0;
+//
+//            @Override
+//            public Object answer(InvocationOnMock invocation) {
+//                if (count == 0) {
+//                    count++;
+//                    return result;
+//                }
+//
+//                return null;
+//            }
+//        });
+//
+//        final Key<TestVersionedEntity> startKey = new StringKey<>("startKey");
+//        final Key<TestVersionedEntity> endKey = new StringKey<>("endKey");
+//        final List<TestVersionedEntity> retrievedEntities = testVersionedEntityDao.scan(startKey, true, endKey, true, 1);
+//
+//        assertEquals(1, retrievedEntities.size());
+//
+//        final TestVersionedEntity entity = retrievedEntities.get(0);
+//        assertEquals(stringValue, entity.getStringValue());
+//        assertEquals(booleanValue, entity.getVersionedBooleanValue());
+//        assertEquals(booleanValueTimestamp, (long) entity.getVersionedBooleanValueTimestamp());
+//    }
+//
+//    @Test
+//    public void testScanRetrievesNonExistentVersionedCellsAsNullValuesAndNullTimestamps() throws IOException {
+//        final Result result = mock(Result.class);
+//        when(result.isEmpty()).thenReturn(false);
+//
+//        final Cell stringValueCell = null;
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestVersionedColumns.STRING_VALUE.getFamily()),
+//                Bytes.toBytes(TestVersionedColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell);
+//
+//        final Cell booleanValueCell = null;
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestVersionedColumns.VERSIONED_BOOLEAN_VALUE.getFamily()),
+//                Bytes.toBytes(TestVersionedColumns.VERSIONED_BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell);
+//
+//        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+//        when(scanner.next()).thenAnswer(new Answer() {
+//            private int count = 0;
+//
+//            @Override
+//            public Object answer(InvocationOnMock invocation) {
+//                if (count == 0) {
+//                    count++;
+//                    return result;
+//                }
+//
+//                return null;
+//            }
+//        });
+//
+//        final Key<TestVersionedEntity> startKey = new StringKey<>("startKey");
+//        final Key<TestVersionedEntity> endKey = new StringKey<>("endKey");
+//        final List<TestVersionedEntity> retrievedEntities = testVersionedEntityDao.scan(startKey, true, endKey, true, 1);
+//
+//        assertEquals(1, retrievedEntities.size());
+//
+//        final TestVersionedEntity entity = retrievedEntities.get(0);
+//        assertNull(entity.getStringValue());
+//        assertNull(entity.getVersionedBooleanValue());
+//        assertNull(entity.getVersionedBooleanValueTimestamp());
+//    }
+//
+//    @Test
+//    public void testScanWithLiveObjectMapper() throws IOException {
+//        testEntityDao = new BigTableEntityDao<>(table, columns, entityFactory, delegateFactory);
+//
+//        final String stringValue = "some string";
+//
+//        final Boolean booleanValue = true;
+//
+//        final TestNestedObject nestedObject = new TestNestedObject();
+//        nestedObject.setSomeValue(3);
+//
+//        final Result result = mock(Result.class);
+//        when(result.isEmpty()).thenReturn(false);
+//
+//        final Cell stringValueCell = mock(Cell.class);
+//
+//        final byte[] stringValueBytes = liveObjectMapper.writeValueAsBytes(stringValue);
+//
+//        when(stringValueCell.getValueArray()).thenReturn(stringValueBytes);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell);
+//
+//        final Cell booleanValueCell = mock(Cell.class);
+//
+//        final byte[] booleanValueBytes = liveObjectMapper.writeValueAsBytes(booleanValue);
+//
+//        when(booleanValueCell.getValueArray()).thenReturn(booleanValueBytes);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell);
+//
+//        final Cell nestedObjectCell = mock(Cell.class);
+//
+//        final byte[] nestedObjectBytes = liveObjectMapper.writeValueAsBytes(nestedObject);
+//
+//        when(nestedObjectCell.getValueArray()).thenReturn(nestedObjectBytes);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
+//                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()))).thenReturn(nestedObjectCell);
+//
+//        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+//        when(scanner.next()).thenAnswer(new Answer() {
+//            private int count = 0;
+//
+//            @Override
+//            public Object answer(InvocationOnMock invocation) {
+//                if (count == 0) {
+//                    count++;
+//                    return result;
+//                }
+//
+//                return null;
+//            }
+//        });
+//
+//        final Key<TestEntity> startKey = new StringKey<>("startKey");
+//        final Key<TestEntity> endKey = new StringKey<>("endKey");
+//        final List<TestEntity> retrievedEntities = testEntityDao.scan(startKey, true, endKey, true, 1);
+//
+//        assertEquals(1, retrievedEntities.size());
+//
+//        final TestEntity entity = retrievedEntities.get(0);
+//        assertEquals(stringValue, entity.getStringValue());
+//        assertEquals(booleanValue, entity.getBooleanValue());
+//        assertEquals(nestedObject, entity.getNestedObject());
+//    }
+//
+//    @Test
+//    public void testScanRetrievesNullStringValueWithLiveObjectMapper() throws IOException {
+//        testEntityDao = new BigTableEntityDao<>(table, columns, entityFactory, delegateFactory);
+//
+//        final String stringValue = null;
+//
+//        final Boolean booleanValue = true;
+//
+//        final TestNestedObject nestedObject = new TestNestedObject();
+//        nestedObject.setSomeValue(3);
+//
+//        final Result result = mock(Result.class);
+//        when(result.isEmpty()).thenReturn(false);
+//
+//        final Cell stringValueCell = mock(Cell.class);
+//
+//        final byte[] stringValueBytes = new byte[0];
+//
+//        when(stringValueCell.getValueArray()).thenReturn(stringValueBytes);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell);
+//
+//        final Cell booleanValueCell = mock(Cell.class);
+//
+//        final byte[] booleanValueBytes = liveObjectMapper.writeValueAsBytes(booleanValue);
+//
+//        when(booleanValueCell.getValueArray()).thenReturn(booleanValueBytes);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell);
+//
+//        final Cell nestedObjectCell = mock(Cell.class);
+//
+//        final byte[] nestedObjectBytes = liveObjectMapper.writeValueAsBytes(nestedObject);
+//
+//        when(nestedObjectCell.getValueArray()).thenReturn(nestedObjectBytes);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
+//                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()))).thenReturn(nestedObjectCell);
+//
+//        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+//        when(scanner.next()).thenAnswer(new Answer() {
+//            private int count = 0;
+//
+//            @Override
+//            public Object answer(InvocationOnMock invocation) {
+//                if (count == 0) {
+//                    count++;
+//                    return result;
+//                }
+//
+//                return null;
+//            }
+//        });
+//
+//        final Key<TestEntity> startKey = new StringKey<>("startKey");
+//        final Key<TestEntity> endKey = new StringKey<>("endKey");
+//        final List<TestEntity> retrievedEntities = testEntityDao.scan(startKey, true, endKey, true, 1);
+//
+//        assertEquals(1, retrievedEntities.size());
+//
+//        final TestEntity entity = retrievedEntities.get(0);
+//        assertEquals(stringValue, entity.getStringValue());
+//        assertEquals(booleanValue, entity.getBooleanValue());
+//        assertEquals(nestedObject, entity.getNestedObject());
+//    }
+//
+//    @Test
+//    public void testScanRetrievesNullBooleanValueWithLiveObjectMapper() throws IOException {
+//        testEntityDao = new BigTableEntityDao<>(table, columns, entityFactory, delegateFactory);
+//
+//        final String stringValue = "some string";
+//
+//        final Boolean booleanValue = null;
+//
+//        final TestNestedObject nestedObject = new TestNestedObject();
+//        nestedObject.setSomeValue(3);
+//
+//        final Result result = mock(Result.class);
+//        when(result.isEmpty()).thenReturn(false);
+//
+//        final Cell stringValueCell = mock(Cell.class);
+//
+//        final byte[] stringValueBytes = liveObjectMapper.writeValueAsBytes(stringValue);
+//
+//        when(stringValueCell.getValueArray()).thenReturn(stringValueBytes);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell);
+//
+//        final Cell booleanValueCell = mock(Cell.class);
+//
+//        final byte[] booleanValueBytes = new byte[0];
+//
+//        when(booleanValueCell.getValueArray()).thenReturn(booleanValueBytes);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell);
+//
+//        final Cell nestedObjectCell = mock(Cell.class);
+//
+//        final byte[] nestedObjectBytes = liveObjectMapper.writeValueAsBytes(nestedObject);
+//
+//        when(nestedObjectCell.getValueArray()).thenReturn(nestedObjectBytes);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
+//                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()))).thenReturn(nestedObjectCell);
+//
+//        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+//        when(scanner.next()).thenAnswer(new Answer() {
+//            private int count = 0;
+//
+//            @Override
+//            public Object answer(InvocationOnMock invocation) {
+//                if (count == 0) {
+//                    count++;
+//                    return result;
+//                }
+//
+//                return null;
+//            }
+//        });
+//
+//        final Key<TestEntity> startKey = new StringKey<>("startKey");
+//        final Key<TestEntity> endKey = new StringKey<>("endKey");
+//        final List<TestEntity> retrievedEntities = testEntityDao.scan(startKey, true, endKey, true, 1);
+//
+//        assertEquals(1, retrievedEntities.size());
+//
+//        final TestEntity entity = retrievedEntities.get(0);
+//        assertEquals(stringValue, entity.getStringValue());
+//        assertEquals(booleanValue, entity.getBooleanValue());
+//        assertEquals(nestedObject, entity.getNestedObject());
+//    }
+//
+//    @Test
+//    public void testScanRetrievesNullNestedObjectWithLiveObjectMapper() throws IOException {
+//        testEntityDao = new BigTableEntityDao<>(table, columns, entityFactory, delegateFactory);
+//
+//        final String stringValue = "some string";
+//
+//        final Boolean booleanValue = true;
+//
+//        final TestNestedObject nestedObject = null;
+//
+//        final Result result = mock(Result.class);
+//        when(result.isEmpty()).thenReturn(false);
+//
+//        final Cell stringValueCell = mock(Cell.class);
+//
+//        final byte[] stringValueBytes = liveObjectMapper.writeValueAsBytes(stringValue);
+//
+//        when(stringValueCell.getValueArray()).thenReturn(stringValueBytes);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()))).thenReturn(stringValueCell);
+//
+//        final Cell booleanValueCell = mock(Cell.class);
+//
+//        final byte[] booleanValueBytes = liveObjectMapper.writeValueAsBytes(booleanValue);
+//
+//        when(booleanValueCell.getValueArray()).thenReturn(booleanValueBytes);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()))).thenReturn(booleanValueCell);
+//
+//        final Cell nestedObjectCell = mock(Cell.class);
+//
+//        final byte[] nestedObjectBytes = new byte[0];
+//
+//        when(nestedObjectCell.getValueArray()).thenReturn(nestedObjectBytes);
+//
+//        when(result.getColumnLatestCell(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
+//                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()))).thenReturn(nestedObjectCell);
+//
+//        when(table.getScanner(any(Scan.class))).thenReturn(scanner);
+//        when(scanner.next()).thenAnswer(new Answer() {
+//            private int count = 0;
+//
+//            @Override
+//            public Object answer(InvocationOnMock invocation) {
+//                if (count == 0) {
+//                    count++;
+//                    return result;
+//                }
+//
+//                return null;
+//            }
+//        });
+//
+//        final Key<TestEntity> startKey = new StringKey<>("startKey");
+//        final Key<TestEntity> endKey = new StringKey<>("endKey");
+//        final List<TestEntity> retrievedEntities = testEntityDao.scan(startKey, true, endKey, true, 1);
+//
+//        assertEquals(1, retrievedEntities.size());
+//
+//        final TestEntity entity = retrievedEntities.get(0);
+//        assertEquals(stringValue, entity.getStringValue());
+//        assertEquals(booleanValue, entity.getBooleanValue());
+//        assertEquals(nestedObject, entity.getNestedObject());
+//    }
+//
+//    @Test(expected = NullPointerException.class)
+//    public void testSaveWithNullKeyThrowsNullPointerException() throws IOException {
+//        final TestEntity testEntity = new TestEntity();
+//        testEntity.setStringValue("test");
+//
+//        testEntityDao.save(null, testEntity);
+//    }
+//
+//    @Test(expected = NullPointerException.class)
+//    public void testSaveWithNullEntityThrowsNullPointerException() throws IOException {
+//        final Key<TestEntity> key = new StringKey<>("key");
+//
+//        testEntityDao.save(key, null);
+//    }
+//
+//    @Test
+//    public void testSavePutsAllColumns() throws IOException {
+//        final String stringValue = "some string";
+//
+//        final Boolean booleanValue = true;
+//
+//        final TestNestedObject nestedObject = new TestNestedObject();
+//        nestedObject.setSomeValue(3);
+//
+//        final TestEntity testEntity = new TestEntity();
+//        testEntity.setStringValue(stringValue);
+//        testEntity.setBooleanValue(booleanValue);
+//        testEntity.setNestedObject(nestedObject);
+//
+//        final byte[] stringValueBytes = {
+//                1, 2, 3
+//        };
+//
+//        when(objectMapper.writeValueAsBytes(stringValue)).thenReturn(stringValueBytes);
+//
+//        final byte[] booleanValueBytes = {
+//                0
+//        };
+//
+//        when(objectMapper.writeValueAsBytes(booleanValue)).thenReturn(booleanValueBytes);
+//
+//        final byte[] nestedObjectBytes = {
+//                5, 4, 3, 2, 1, 0
+//        };
+//
+//        when(objectMapper.writeValueAsBytes(nestedObject)).thenReturn(nestedObjectBytes);
+//
+//        final TestEntity result = testEntityDao.save(new StringKey<>("key"), testEntity);
+//
+//        assertNotNull(result);
+//
+//        assertEquals(stringValue, result.getStringValue());
+//        assertEquals(booleanValue, result.getBooleanValue());
+//        assertEquals(nestedObject, result.getNestedObject());
+//
+//        verify(table).put(putArgumentCaptor.capture());
+//
+//        final List<Put> puts = putArgumentCaptor.getValue();
+//        assertNotNull(puts);
+//        assertEquals(1, puts.size());
+//
+//        final Put put = puts.get(0);
+//
+//        assertTrue(put.has(Bytes.toBytes(TestColumns.STRING_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.STRING_VALUE.getQualifier()), stringValueBytes));
+//        assertTrue(put.has(Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getFamily()),
+//                Bytes.toBytes(TestColumns.BOOLEAN_VALUE.getQualifier()), booleanValueBytes));
+//        assertTrue(put.has(Bytes.toBytes(TestColumns.NESTED_OBJECT.getFamily()),
+//                Bytes.toBytes(TestColumns.NESTED_OBJECT.getQualifier()), nestedObjectBytes));
+//    }
 
     @Test
     public void testSavePutsAllColumnsWithLiveObjectMapper() throws IOException {

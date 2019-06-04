@@ -9,11 +9,18 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.filter.BinaryComparator;
+import org.apache.hadoop.hbase.filter.CompareFilter;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.PageFilter;
+import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -137,8 +144,10 @@ class BigTableEntityDao<T extends Entity> implements Dao<T> {
     }
 
     /**
+     * Utility method for running scan without a provided constant.
+     *
      * Runs a paging table scan from the provided starting key to the provided ending key,
-     * and returns a list of entities in the order returned from BigTable.
+     * and returns a list of paired Key/Value entities in the order returned from BigTable.
      *
      * Use the last returned entity to construct a new starting key for subsequent paging requests until no values are returned.
      *
@@ -151,27 +160,59 @@ class BigTableEntityDao<T extends Entity> implements Dao<T> {
      * @throws IOException when an error occurs while communicating with BigTable
      */
     @Override
-    public <K extends Key<T>> List<T> scan(final K startKey,
-                                           final boolean startKeyInclusive,
-                                           final K endKey,
-                                           final boolean endKeyInclusive,
-                                           final int numRows) throws IOException {
+    public <K extends Key<T>> List<Map.Entry<K, T>> scan(final K startKey,
+                                                         final boolean startKeyInclusive,
+                                                         final K endKey,
+                                                         final boolean endKeyInclusive,
+                                                         final int numRows) throws IOException {
+        return scan(startKey, startKeyInclusive, endKey, endKeyInclusive, numRows, null);
+    }
+
+    /**
+     * Runs a paging table scan from the provided starting key to the provided ending key,
+     * and returns a list of paired Key/Value entities in the order returned from BigTable.
+     *
+     * Use the last returned entity to construct a new starting key for subsequent paging requests until no values are returned.
+     *
+     * @param startKey key to start scanning from (does not have to have an existing record at the location)
+     * @param startKeyInclusive whether to include result from startKey
+     * @param endKey key to end scanning on (does not have to have an existing record at the location)
+     * @param endKeyInclusive whether to include result from endKey
+     * @param numRows max number of entries to return
+     * @param constant optional field to be used to be included, should be the constant provided to KeyComponent if it exists
+     * @return A list of entities in the order that they are stored in BigTable
+     * @throws IOException when an error occurs while communicating with BigTable
+     */
+    @Override
+    public <K extends Key<T>> List<Map.Entry<K, T>> scan(final K startKey,
+                                                         final boolean startKeyInclusive,
+                                                         final K endKey,
+                                                         final boolean endKeyInclusive,
+                                                         final int numRows,
+                                                         @Nullable final String constant) throws IOException {
         Objects.requireNonNull(startKey);
         Objects.requireNonNull(endKey);
 
+        List<Filter> filters = new ArrayList<>();
+        filters.add(new PageFilter(numRows));
+        if (Objects.nonNull(constant) && "".equals(constant)) {
+            filters.add(new RowFilter(CompareFilter.CompareOp.EQUAL, new BinaryComparator(constant.getBytes())));
+        }
+        FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL, filters);
+
         final Scan scan = new Scan();
-        scan.setFilter(new PageFilter(numRows));
+        scan.setFilter(filterList);
         scan.withStartRow(startKey.toBytes(), startKeyInclusive);
         scan.withStopRow(endKey.toBytes(), endKeyInclusive);
 
         final ResultScanner scanner = table.getScanner(scan);
-        final List<T> results = new ArrayList<>();
+        final List<Map.Entry<K, T>> results = new ArrayList<>();
 
         Result result;
         while ((result = scanner.next()) != null) {
             if (!result.isEmpty()) {
                 final T entity = delegateToEntity(result);
-                results.add(entity);
+                results.add(new AbstractMap.SimpleImmutableEntry<>((K) new Key<T>(result.getRow()), entity));
             }
         }
 
